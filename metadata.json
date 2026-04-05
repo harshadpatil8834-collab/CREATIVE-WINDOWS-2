@@ -1,0 +1,5 @@
+{
+  "name": "Creative Windows Viewer",
+  "description": "A viewer for the Creative Windows project.",
+  "requestFramePermissions": ["geolocation"]
+}
