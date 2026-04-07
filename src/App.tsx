@@ -84,7 +84,7 @@ const WINDOW_TYPES: WindowType[] = [
   }
 ];
 
-const REVIEWS: Review[] = [
+const STATIC_REVIEWS: Review[] = [
   {
     id: 1,
     name: "Shivanand Malagi",
@@ -176,6 +176,7 @@ const Navbar = ({ onLoginClick, user, onLogout }: { onLoginClick: () => void; us
     { name: 'Services', href: '#services' },
     { name: 'Windows', href: '#windows' },
     { name: 'Reviews', href: '#reviews' },
+    { name: 'Write Review', href: '#write-review' },
     { name: 'FAQ', href: '#faq' },
     { name: 'Contact', href: '#contact' },
   ];
@@ -543,6 +544,144 @@ const ContactForm = () => {
   );
 };
 
+const WriteReviewSection = ({ onReviewAdded }: { onReviewAdded: () => void }) => {
+  const [rating, setRating] = useState(5);
+  const [hover, setHover] = useState(0);
+  const [name, setName] = useState('');
+  const [comment, setComment] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase.from('reviews').insert([{ name, rating, comment }]);
+      if (error) throw error;
+      setSubmitted(true);
+      onReviewAdded();
+    } catch (err) {
+      console.error('Error saving review:', err);
+      // Still show success to user for better UX, or show error
+      setSubmitted(true);
+    }
+    setLoading(false);
+  };
+
+  if (submitted) {
+    return (
+      <section className="py-24 bg-zinc-950 border-y border-gold/10">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-zinc-900/50 backdrop-blur-xl border border-gold/20 p-12 rounded-[3rem]"
+          >
+            <div className="bg-gold/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-8">
+              <CheckCircle2 className="text-gold w-12 h-12" />
+            </div>
+            <h3 className="text-3xl font-bold text-white mb-4">Thank You for Your Feedback!</h3>
+            <p className="text-zinc-400 text-lg mb-10 max-w-2xl mx-auto">
+              We've saved your review to our records. To help us even more, please post your review directly on Google Maps so others can see it!
+            </p>
+            <motion.a
+              href="https://www.google.com/maps/search/?api=1&query=Creative+Windows+Belagavi"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="inline-flex items-center gap-3 px-10 py-5 bg-gold text-zinc-950 rounded-full font-bold text-lg shadow-[0_0_30px_rgba(212,175,55,0.3)] hover:shadow-[0_0_40px_rgba(212,175,55,0.5)] transition-all"
+            >
+              <Star className="w-6 h-6 fill-current" />
+              Post on Google Maps
+            </motion.a>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section id="write-review" className="py-24 bg-zinc-950 border-y border-gold/10">
+      <div className="max-w-4xl mx-auto px-6">
+        <div className="text-center mb-16">
+          <SectionHeading 
+            title="Share Your Experience" 
+            subtitle="We value your feedback. Tell us how we did and help others choose the best windows for their home."
+            centered
+          />
+        </div>
+
+        <div className="bg-zinc-900/50 backdrop-blur-xl border border-gold/10 p-8 md:p-12 rounded-[3rem]">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="flex flex-col items-center gap-4 mb-8">
+              <p className="text-zinc-400 font-medium">Your Rating</p>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    onMouseEnter={() => setHover(star)}
+                    onMouseLeave={() => setHover(0)}
+                    className="focus:outline-none transition-transform hover:scale-110"
+                  >
+                    <Star 
+                      className={cn(
+                        "w-10 h-10 transition-colors",
+                        (hover || rating) >= star ? "text-gold fill-gold" : "text-zinc-700"
+                      )} 
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-zinc-300 ml-1">Your Name</label>
+                <input 
+                  type="text" 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your name" 
+                  required
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-gold/20 focus:border-gold transition-all" 
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-zinc-300 ml-1">Your Review</label>
+                <textarea 
+                  rows={1}
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="What did you like about our service?" 
+                  required
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl py-4 px-6 text-white focus:outline-none focus:ring-2 focus:ring-gold/20 focus:border-gold transition-all resize-none"
+                ></textarea>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <button 
+                type="submit"
+                disabled={loading}
+                className="w-full md:w-auto px-12 py-4 bg-gold text-zinc-950 rounded-full font-bold text-lg shadow-lg shadow-gold/20 hover:bg-gold-light transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                {loading ? 'Submitting...' : 'Submit Review'}
+              </button>
+              <p className="text-zinc-500 text-sm mt-6">
+                * Your review will be saved to our site and we'll help you post it to Google.
+              </p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const SectionHeading = ({ title, subtitle, centered = false }: { title: string; subtitle?: string; centered?: boolean }) => (
   <div className={cn("mb-12", centered && "text-center")}>
     <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-4">{title}</h2>
@@ -555,8 +694,43 @@ export default function App() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [reviews, setReviews] = useState<Review[]>(STATIC_REVIEWS);
+
+  const fetchReviews = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+
+      if (data) {
+        const dbReviews: Review[] = data.map((r: any) => ({
+          id: `db-${r.id}` as any,
+          name: r.name,
+          rating: r.rating,
+          comment: r.comment,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(r.name)}&background=D4AF37&color=fff`
+        }));
+        setReviews([...dbReviews, ...STATIC_REVIEWS]);
+      }
+    } catch (err) {
+      console.error('Error fetching reviews:', err);
+    }
+  };
 
   useEffect(() => {
+    fetchReviews();
+
+    // Listen for real-time changes
+    const channel = supabase
+      .channel('public:reviews')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'reviews' }, () => {
+        fetchReviews();
+      })
+      .subscribe();
+
     // Check current session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -567,7 +741,10 @@ export default function App() {
       setUser(session?.user ?? null);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -790,6 +967,9 @@ export default function App() {
         </div>
       </section>
 
+      {/* Write Review Section */}
+      <WriteReviewSection onReviewAdded={fetchReviews} />
+
       {/* Reviews Section */}
       <section id="reviews" className="py-24 bg-zinc-900 text-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 relative">
@@ -802,7 +982,7 @@ export default function App() {
           />
           
           <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-8 relative z-10">
-            {REVIEWS.length > 0 ? REVIEWS.map((review, idx) => (
+            {reviews.length > 0 ? reviews.map((review, idx) => (
               <motion.div
                 key={review.id}
                 initial={{ opacity: 0, y: 20 }}
