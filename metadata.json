@@ -1,5 +1,7 @@
 {
-  "name": "Creative Windows Belagavi",
+  "name": "Creative Windows ",
   "description": "Premium uPVC and wooden windows factory in Belagavi. Features real-time customer reviews, custom window designs, and expert installation services.",
-  "requestFramePermissions": ["geolocation"]
+  "requestFramePermissions": [
+    "geolocation"
+  ]
 }

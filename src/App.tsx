@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
-import { supabase } from './lib/supabase';
+import { supabase, isConfigured } from './lib/supabase';
 import { type User as SupabaseUser } from '@supabase/supabase-js';
 
 // --- Types ---
@@ -551,20 +551,27 @@ const WriteReviewSection = ({ onReviewAdded }: { onReviewAdded: () => void }) =>
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
+    
+    if (!isConfigured) {
+      setError('Supabase is not configured. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your AI Studio Secrets.');
+      setLoading(false);
+      return;
+    }
     
     try {
-      const { error } = await supabase.from('reviews').insert([{ name, rating, comment }]);
-      if (error) throw error;
+      const { error: supabaseError } = await supabase.from('reviews').insert([{ name, rating, comment }]);
+      if (supabaseError) throw supabaseError;
       setSubmitted(true);
       onReviewAdded();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving review:', err);
-      // Still show success to user for better UX, or show error
-      setSubmitted(true);
+      setError(err.message || 'Failed to save review. Please check your connection.');
     }
     setLoading(false);
   };
@@ -615,6 +622,11 @@ const WriteReviewSection = ({ onReviewAdded }: { onReviewAdded: () => void }) =>
 
         <div className="bg-zinc-900/50 backdrop-blur-xl border border-gold/10 p-8 md:p-12 rounded-[3rem]">
           <form onSubmit={handleSubmit} className="space-y-8">
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-500 text-sm p-4 rounded-2xl text-center">
+                {error}
+              </div>
+            )}
             <div className="flex flex-col items-center gap-4 mb-8">
               <p className="text-zinc-400 font-medium">Your Rating</p>
               <div className="flex gap-2">
